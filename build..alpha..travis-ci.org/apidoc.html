@@ -1,0 +1,174 @@
+<div class="apidocDiv">
+<style>
+/*csslint
+*/
+.apidocDiv {
+    background: #fff;
+    font-family: Arial, Helvetica, sans-serif;
+}
+.apidocDiv a[href] {
+    color: #33f;
+    font-weight: bold;
+    text-decoration: none;
+}
+.apidocDiv a[href]:hover {
+    text-decoration: underline;
+}
+.apidocCodeCommentSpan {
+    background: #bbf;
+    color: #000;
+    display: block;
+}
+.apidocCodeKeywordSpan {
+    color: #d00;
+    font-weight: bold;
+}
+.apidocCodePre {
+    background: #eef;
+    border: 1px solid;
+    color: #777;
+    padding: 5px;
+    white-space: pre-wrap;
+}
+.apidocFooterDiv {
+    margin-top: 20px;
+    text-align: center;
+}
+.apidocModuleLi {
+    margin-top: 10px;
+}
+.apidocSectionDiv {
+    border-top: 1px solid;
+    margin-top: 20px;
+}
+.apidocSignatureSpan {
+    color: #777;
+    font-weight: bold;
+}
+</style>
+<h1>api documentation for
+    <a
+
+    >gulp-group-concat (v1.1.5)</a>
+</h1>
+<h4>Concats groups of files into a smaller number of files</h4>
+<div class="apidocSectionDiv"><a
+    href="#apidoc.tableOfContents"
+    id="apidoc.tableOfContents"
+><h1>table of contents</h1></a><ol>
+
+    <li class="apidocModuleLi"><a href="#apidoc.module.gulp-group-concat">module gulp-group-concat</a><ol>
+
+        <li>
+
+            <a class="apidocElementLiA" href="#apidoc.element.gulp-group-concat.gulp-group-concat">
+            function <span class="apidocSignatureSpan"></span>gulp-group-concat
+            <span class="apidocSignatureSpan">(fileGlobs, opt)</span>
+            </a>
+
+        </li>
+
+    </ol></li>
+
+</ol></div>
+
+<div class="apidocSectionDiv">
+<h1><a href="#apidoc.module.gulp-group-concat" id="apidoc.module.gulp-group-concat">module gulp-group-concat</a></h1>
+
+
+    <h2>
+        <a href="#apidoc.element.gulp-group-concat.gulp-group-concat" id="apidoc.element.gulp-group-concat.gulp-group-concat">
+        function <span class="apidocSignatureSpan"></span>gulp-group-concat
+        <span class="apidocSignatureSpan">(fileGlobs, opt)</span>
+        </a>
+    </h2>
+    <ul>
+    <li>description and source-code<pre class="apidocCodePre">gulp-group-concat = function (fileGlobs, opt) {
+  opt = opt || {};
+  if (!_.isPlainObject(fileGlobs)) {
+    throw new gUtil.PluginError(pluginName, &#x27;First argument must be an object of names and file globs&#x27;)
+  }
+
+  var outFiles = {};
+  var foundSourceMap = false;
+
+  function concatBuffersOnly(files, filename) {
+    //no source maps, do it fast
+    for(var i = 0; i &#x3c; files.length; i++) {
+      files[i] = files[i].contents;
+    }
+
+    return new gUtil.File({
+      cwd: &#x22;&#x22;,
+      base: &#x22;&#x22;,
+      path: filename,
+      contents: Buffer.concat(files)
+    });
+  }
+
+  function concatWithSourceMap(files, filename) {
+    var outFile, i, sourceStream, inFiles = {};
+    for(i = 0; i &#x3c; files.length; i++) {
+      if (!inFiles[files[i].path]) {
+        inFiles[files[i].path] = files[i].contents.toString();
+      }
+    }
+    sourceStream = new Concat(filename, opt.newLine || &#x27;\n&#x27;);
+    for(i = 0; i &#x3c; files.length; i++) {
+      sourceStream.add(files[i].relative, inFiles[files[i].path], files[i].sourceMap);
+    }
+    outFile = new gUtil.File({
+      cwd: &#x22;&#x22;,
+      base: &#x22;&#x22;,
+      path: filename,
+      contents: new Buffer(sourceStream.content)
+    });
+    vinylSourcemapsApply(outFile, sourceStream.sourceMap);
+    return outFile;
+  }
+
+  function addContent(filename, file) {
+    if (!outFiles[filename]) {
+      outFiles[filename] = [];
+    }
+    if (file.sourceMap) {
+      foundSourceMap = true;
+    }
+    outFiles[filename].push(file);
+  }
+
+  return through.obj(function (file, encoding, cb) {
+
+    _.each(fileGlobs, function (fileglob, filename) {
+      var path = file.cwd ? file.path.substring(file.cwd.length + 1) : file.path;
+      var matches = glob.match(fileglob, path);
+      if (matches.length) {
+        addContent(filename, file)
+      }
+    });
+
+    //save the files until they&#x27;re done streaming/buffering
+    cb()
+  }, function (cb){
+    var self = this;
+
+    //once they&#x27;re done giving us files, we give them the concatenated results
+    _.each(outFiles, function (files, filename) {
+      self.push(foundSourceMap ? concatWithSourceMap(files, filename) : concatBuffersOnly(files, filename));
+    });
+
+    cb()
+  });
+}</pre></li>
+    <li>example usage<pre class="apidocCodePre">n/a</pre></li>
+    </ul>
+
+
+</div>
+
+<div class="apidocFooterDiv">
+    [ this document was created with
+    <a href="https://github.com/kaizhu256/node-utility2" target="_blank">utility2</a>
+    ]
+</div>
+</div>
